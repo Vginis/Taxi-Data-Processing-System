@@ -35,16 +35,14 @@ output = {
     # "Qs": ["Q1", "Q2", "Q3", "Q4"],
     # "output": [q1, q2, q3, q4]
 }
-df2 = panda.DataFrame(output)
-csv_path = "answers.csv"
-df2.to_csv(csv_path, index=False) 
-sparkDF2 = spark.createDataFrame(df2)
-(
-  sparkDF2
-  .write
-  .mode('append')
-  .format("com.databricks.spark.csv")
-  .save("wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv")
-)
+sparkDF2 = spark.createDataFrame(output)
+sparkDF2.write().csv("wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv")
+# (
+#   sparkDF2
+#   .write
+#   .mode('append')
+#   .format("com.databricks.spark.csv")
+#   .save("wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv")
+# )
 
 #todo problem in saving the file
