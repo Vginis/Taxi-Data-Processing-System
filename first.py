@@ -1,13 +1,13 @@
-#run it only on azure databricks environment
 import pandas as panda
 storage_account_name = "taxibatchdata"
-storage_account_access_key = "zh6H1zAm7LnxNfqrNBEHRmTNWr6eEf7ZNhPD0TdStiEPIuk3A7Udbo2c3i7afyjfM2dF+BzW6njo+AStHe//1Q=="
-file_location = "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/test.csv"
+storage_account_access_key = "3Gbq5k8yW9PsBALgsHwC56xUZfJDvuFdkjxz4av5pMPSwJNcegLlXyoE/O4S/+TrSMWrQNqLH5zC+AStryI3xg=="
+file_location = "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/2009-01-31.csv"
 file_type = "csv"
 spark.conf.set(
   "fs.azure.account.key."+storage_account_name+".blob.core.windows.net",
   storage_account_access_key)
 df = spark.read.csv(file_location, header=True, inferSchema=True)
+print(df)
 rows = df.select("pickup_latitude","pickup_longitude").collect()
 q1 =0
 q2 = 0
@@ -27,22 +27,12 @@ print(q2)
 print(q3)
 print(q4)
 
-output = {
-  "Q1" : [q1],
-  "Q2" : [q2],
-  "Q3" : [q3],
-  "Q4" : [q4]
-    # "Qs": ["Q1", "Q2", "Q3", "Q4"],
-    # "output": [q1, q2, q3, q4]
-}
-sparkDF2 = spark.createDataFrame(output)
-sparkDF2.write().csv("wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv")
-# (
-#   sparkDF2
-#   .write
-#   .mode('append')
-#   .format("com.databricks.spark.csv")
-#   .save("wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv")
-# )
+output = [
+  ("Q1", q1),
+  ("Q2", q2),
+  ("Q3", q3),
+  ("Q4", q4)
+]
 
-#todo problem in saving the file
+sparkDF2 = spark.createDataFrame(output,["Qs", "output"])
+sparkDF2.coalesce(1).write.csv("wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv",header=True)
