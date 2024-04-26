@@ -28,8 +28,12 @@ print(q3)
 print(q4)
 
 output = {
-    "Qs": ["Q1", "Q2", "Q3", "Q4"],
-    "output": [q1, q2, q3, q4]
+  "Q1" : [q1],
+  "Q2" : [q2],
+  "Q3" : [q3],
+  "Q4" : [q4]
+    # "Qs": ["Q1", "Q2", "Q3", "Q4"],
+    # "output": [q1, q2, q3, q4]
 }
 df2 = panda.DataFrame(output)
 csv_path = "answers.csv"
