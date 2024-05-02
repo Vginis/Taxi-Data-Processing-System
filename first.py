@@ -1,3 +1,16 @@
+# dbutils.fs.mount(
+#   source = "wasbs://storagecontainer@taxiproject1.blob.core.windows.net",
+#   #mount_point = "/mnt/taxidata1",
+#   extra_configs = {"fs.azure.account.key.taxiproject1.blob.core.windows.net":"fvCk5oFvMwibLtj5Zwg02ilybVl0RvjblebGpFhUb93fauBJKiGIgQSOtsFQAxf7OFjShtJJV6g9+AStCeGKeA=="})
+
+# Set the data location and type
+storage_container_name = "storagecontainer"
+storage_account_name = "taxiproject1"
+storage_account_access_key = "fvCk5oFvMwibLtj5Zwg02ilybVl0RvjblebGpFhUb93fauBJKiGIgQSOtsFQAxf7OFjShtJJV6g9+AStCeGKeA=="
+
+dbutils.widgets.text("fileName","","")
+fileName = "/mnt/taxidata/Data/" +dbutils.widgets.get("fileName")
+
 def get_quadrant(latitude, longitude, center_lat=40.735923, center_lon=-73.990294):
     if latitude >= center_lat:
         if longitude >= center_lon:
@@ -10,39 +23,14 @@ def get_quadrant(latitude, longitude, center_lat=40.735923, center_lon=-73.99029
         else:
             return "Q4"
 
-
-# Set the data location and type
-storage_account_name = "taxibatchdata"
-storage_account_access_key = "3Gbq5k8yW9PsBALgsHwC56xUZfJDvuFdkjxz4av5pMPSwJNcegLlXyoE/O4S/+TrSMWrQNqLH5zC+AStryI3xg=="
-data_file_location = (
-    "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/2009-02-28.csv"
-)
-counts_file_location = (
-    "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv"
-)
-file_type = "csv"
-
 spark.conf.set(
     "fs.azure.account.key." + storage_account_name + ".blob.core.windows.net",
     storage_account_access_key,
 )
 
 # Read the Data CSV file
-dataDF = (
-    spark.read.format(file_type)
-    .option("inferSchema", "true")
-    .option("header", "true")
-    .load(data_file_location)
-)
-
-# Read the Counts CSV file
-countsDF = (
-    spark.read.format(file_type)
-    .option("inferSchema", "true")
-    .option("header", "true")
-    .load(counts_file_location)
-)
-
+countsDF=spark.read.option("header","true").option("inferSchema","true").csv("/mnt/taxidata/output1.csv")
+dataDF=spark.read.option("header","true").option("inferSchema","true").csv(fileName)
 # Count rides by quadrant
 quadrants = {"Q1": 0, "Q2": 0, "Q3": 0, "Q4": 0}
 countRows = countsDF.select("Quadrant", "Rides").collect()
@@ -64,26 +52,26 @@ quadrants_df = spark.createDataFrame(
     [(k, v) for k, v in quadrants.items()], ["Quadrant", "Rides"]
 )
 
-# Write DataFrame to CSV file
+#Write DataFrame to CSV file
 quadrants_df.coalesce(1).write.csv(
-    "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/address-temp",
+    "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
     header=True,
 )
-
+print("Here")
 file_path = [
     file.path
     for file in dbutils.fs.ls(
-        "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/address-temp/"
+        "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp"
     )
     if file.name.endswith(".csv")
 ][0]
 
 dbutils.fs.cp(
     file_path,
-    "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/firstOutput.csv",
+    "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/output1.csv",
 )
 dbutils.fs.rm(
-    "wasbs://storagecontainer@taxibatchdata.blob.core.windows.net/address-temp",
+    "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
     recurse=True,
 )
 
