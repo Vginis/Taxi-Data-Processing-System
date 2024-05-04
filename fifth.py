@@ -1,17 +1,13 @@
+storage_container_name = "storagecontainer"
+storage_account_name = "taxibatchdata"
+storage_account_access_key = "BVy7eawZezL2IJfqfaapyTM1b71EvEZ0ksc6uPGJqXWMxC+hj0IxuIDbRO9kq1Afp++0I9DRZZds+AStfK1+gA=="
+
+dbutils.widgets.text("fileName","","")
+fileName = "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/Data/"+ dbutils.widgets.get("fileName")
+
 import csv
 from math import *
-def main():
-    latitude = 40.667851
-    longtitude = -73.984291
-    with open("CSV per Month/2009-01-31.csv","r") as file:
-        reader = csv.reader(file)
-        next(reader, None)
-        output = []
-        for row in reader:
-            if (float(row[1])>=10 and haversine(longtitude,latitude,float(row[3]),float(row[4]))>=4.8 and haversine(longtitude,latitude,float(row[3]),float(row[4]))<=5.2):
-                output.append(row[1])
-        print(output)
-#todo Thelei doyleia den einai etoimo
+
 def haversine(lon1, lat1, lon2, lat2):
     # convert decimal degrees to radians 
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
@@ -22,4 +18,46 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * asin(sqrt(a)) 
     r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
     return c * r
-main()
+
+spark.conf.set(
+    "fs.azure.account.key." + storage_account_name + ".blob.core.windows.net",
+    storage_account_access_key,
+)
+
+# Read the Data CSV file
+countsDF=spark.read.option("header","true").option("inferSchema","true").csv("wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/output5.csv")
+dataDF=spark.read.option("header","true").option("inferSchema","true").csv(fileName)
+
+latitude = 40.667851
+longtitude = -73.984291
+routes = []
+dataRows = dataDF.collect()
+for row in dataRows:
+    if (float(row[1])>=10 and haversine(longtitude,latitude,float(row[3]),float(row[4]))>=4.8 and haversine(longtitude,latitude,float(row[3]),float(row[4]))<=5.2):
+        routes.append(row)
+
+countsDF = spark.createDataFrame(routes)
+#Write DataFrame to CSV file
+countsDF.coalesce(1).write.csv(
+    "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
+    header=True,
+)
+print("Here")
+file_path = [
+    file.path
+    for file in dbutils.fs.ls(
+        "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp"
+    )
+    if file.name.endswith(".csv")
+][0]
+
+dbutils.fs.cp(
+    file_path,
+    "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/output5.csv",
+)
+dbutils.fs.rm(
+    "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
+    recurse=True,
+)
+
+
