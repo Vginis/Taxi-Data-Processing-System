@@ -40,7 +40,6 @@ countsDF.coalesce(1).write.csv(
     "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
     header=True,
 )
-print("Here")
 file_path = [
     file.path
     for file in dbutils.fs.ls(
