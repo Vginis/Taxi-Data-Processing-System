@@ -1,9 +1,9 @@
+# Set the data location and type
 storage_container_name = "storagecontainer"
 storage_account_name = "taxibatchdata"
-storage_account_access_key = "aUxmDUCCmdJ3XqOwsAsyHnejrIrFr0Cj4fxsHVOKOtFL6aFEI4r8MWZ36Gvq2fZG1FzuTOUn6ER9+AStSuwY8w=="
+storage_account_access_key = "cpsGZ3RgdkOHUtTouooEvl2Is2y5vSLdto3L8JWazyzdgqNJxAIYA2VKRhs843nKwdOHSVpYl4Eh+ASt2Nsk6A=="
 
-dbutils.widgets.text("fileName","","")
-fileName = "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/"+ dbutils.widgets.get("fileName")
+fileName = "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/output2.csv"
 
 import csv
 from datetime import datetime
@@ -96,4 +96,3 @@ dbutils.fs.rm(
     "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
     recurse=True,
 )
-

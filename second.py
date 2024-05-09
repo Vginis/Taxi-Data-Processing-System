@@ -31,9 +31,6 @@ dataRows = dataDF.collect()
 for row in dataRows:
     if float(row[1])>=10 and int(row[7])>=2 and haversine(float(row[3]),float(row[4]),float(row[5]),float(row[6]))>=1:
         routes.append(row)
-        print(haversine(float(row[3]),float(row[4]),float(row[5]),float(row[6])))
-for d in routes:
-    print(d)
 countsDF = spark.createDataFrame(routes)
 #Write DataFrame to CSV file
 countsDF.coalesce(1).write.csv(

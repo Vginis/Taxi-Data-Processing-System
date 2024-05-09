@@ -1,6 +1,6 @@
 storage_container_name = "storagecontainer"
 storage_account_name = "taxibatchdata"
-storage_account_access_key = "BVy7eawZezL2IJfqfaapyTM1b71EvEZ0ksc6uPGJqXWMxC+hj0IxuIDbRO9kq1Afp++0I9DRZZds+AStfK1+gA=="
+storage_account_access_key = "6uJ804NGlYDTzTDOQPKBBIIwBfOZQ1QZaZL0GA86Z0YEhstvHoICCGWEtbOTDyNKtfFj2CDxPFE2+ASt7YxqhA=="
 
 dbutils.widgets.text("fileName","","")
 fileName = "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/Data/"+ dbutils.widgets.get("fileName")
@@ -19,6 +19,24 @@ def haversine(lon1, lat1, lon2, lat2):
     r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
     return c * r
 
+def findPopularHours(rows):
+    hoursCount = {}
+    datetimes = []
+    for x in range(0,25):
+        hoursCount[x] = 0
+    for dt in rows:
+         datetimes.append(dt.key)
+    
+    for x in datetimes:
+        for h in range(0,25):
+            if(x.hour == h):
+                hoursCount[h] +=1
+    sorted_hours_with_counts = sorted(
+        hoursCount.items(), key=lambda item: item[1], reverse=True
+    )
+
+    return sorted_hours_with_counts
+
 spark.conf.set(
     "fs.azure.account.key." + storage_account_name + ".blob.core.windows.net",
     storage_account_access_key,
@@ -35,14 +53,14 @@ dataRows = dataDF.collect()
 for row in dataRows:
     if (float(row[1])>=10 and haversine(longtitude,latitude,float(row[3]),float(row[4]))>=4.8 and haversine(longtitude,latitude,float(row[3]),float(row[4]))<=5.2):
         routes.append(row)
+countsDF = spark.createDataFrame(findPopularHours(routes),schema=["Hour", "Count"])
 
-countsDF = spark.createDataFrame(routes)
 #Write DataFrame to CSV file
 countsDF.coalesce(1).write.csv(
     "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
     header=True,
 )
-print("Here")
+
 file_path = [
     file.path
     for file in dbutils.fs.ls(

@@ -1,15 +1,10 @@
-# dbutils.fs.mount(
-#   source = "wasbs://storagecontainer@taxiproject1.blob.core.windows.net",
-#   #mount_point = "/mnt/taxidata1",
-#   extra_configs = {"fs.azure.account.key.taxiproject1.blob.core.windows.net":"fvCk5oFvMwibLtj5Zwg02ilybVl0RvjblebGpFhUb93fauBJKiGIgQSOtsFQAxf7OFjShtJJV6g9+AStCeGKeA=="})
-
 # Set the data location and type
 storage_container_name = "storagecontainer"
-storage_account_name = "taxiproject1"
-storage_account_access_key = "fvCk5oFvMwibLtj5Zwg02ilybVl0RvjblebGpFhUb93fauBJKiGIgQSOtsFQAxf7OFjShtJJV6g9+AStCeGKeA=="
+storage_account_name = "taxibatchdata"
+storage_account_access_key = "cpsGZ3RgdkOHUtTouooEvl2Is2y5vSLdto3L8JWazyzdgqNJxAIYA2VKRhs843nKwdOHSVpYl4Eh+ASt2Nsk6A=="
 
 dbutils.widgets.text("fileName","","")
-fileName = "/mnt/taxidata/Data/" +dbutils.widgets.get("fileName")
+fileName = "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/Data/"+ dbutils.widgets.get("fileName")
 
 def get_quadrant(latitude, longitude, center_lat=40.735923, center_lon=-73.990294):
     if latitude >= center_lat:
@@ -29,7 +24,7 @@ spark.conf.set(
 )
 
 # Read the Data CSV file
-countsDF=spark.read.option("header","true").option("inferSchema","true").csv("/mnt/taxidata/output1.csv")
+countsDF=spark.read.option("header","true").option("inferSchema","true").csv("wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/output1.csv")
 dataDF=spark.read.option("header","true").option("inferSchema","true").csv(fileName)
 # Count rides by quadrant
 quadrants = {"Q1": 0, "Q2": 0, "Q3": 0, "Q4": 0}
@@ -57,7 +52,6 @@ quadrants_df.coalesce(1).write.csv(
     "wasbs://"+storage_container_name+"@"+storage_account_name+".blob.core.windows.net/address-temp",
     header=True,
 )
-print("Here")
 file_path = [
     file.path
     for file in dbutils.fs.ls(
