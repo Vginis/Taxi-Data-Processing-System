@@ -4,21 +4,20 @@ storage_account_name = "taxibatchdata"
 storage_account_access_key = "ejXy7zl57vPiu4WiNWZj8PMw996zSvPqVmlgMIDlppN2rJSpx03lSGMnLWPkS86CzJLOFgQA+eAe+AStxRlvnw=="
 
 dbutils.widgets.text("fileName", "", "")
-fileName = "/mnt/taxidata/Data/" + dbutils.widgets.get("fileName")
-
-from math import radians, cos, sin, asin, sqrt
+fileName = "/mnt/taxidata/Streaming/" + dbutils.widgets.get("fileName")
 
 
-def haversine(lon1, lat1, lon2, lat2):
-    # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    c = 2 * asin(sqrt(a))
-    r = 6371  # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
-    return c * r
+def get_quadrant(latitude, longitude, center_lat=40.735923, center_lon=-73.990294):
+    if latitude >= center_lat:
+        if longitude >= center_lon:
+            return "Q1"
+        else:
+            return "Q2"
+    else:
+        if longitude >= center_lon:
+            return "Q3"
+        else:
+            return "Q4"
 
 
 spark.conf.set(
@@ -30,24 +29,33 @@ spark.conf.set(
 countsDF = (
     spark.read.option("header", "true")
     .option("inferSchema", "true")
-    .csv("/mnt/taxidata/output2.csv")
+    .csv("/mnt/taxidata/output4.csv")
 )
 dataDF = spark.read.option("header", "true").option("inferSchema", "true").csv(fileName)
 
-# Count rides by distance, price and passengers
-routes = []
-dataRows = dataDF.collect()
-for row in dataRows:
-    if (
-        float(row[1]) >= 10
-        and int(row[7]) >= 2
-        and haversine(float(row[3]), float(row[4]), float(row[5]), float(row[6])) >= 1
-    ):
-        routes.append(row)
-countsDF = spark.createDataFrame(routes)
+# Count rides by quadrant
+quadrants = {"Q1": 0, "Q2": 0, "Q3": 0, "Q4": 0}
+countRows = countsDF.select("Quadrant", "Rides").collect()
+for cr in countRows:
+    quadrants[cr.Quadrant] = cr.Rides
+dataRows = dataDF.select("pickup_latitude", "pickup_longitude").collect()
+for dr in dataRows:
+    pickup_lat = dr.pickup_latitude
+    pickup_lon = dr.pickup_longitude
+    quadrant = get_quadrant(pickup_lat, pickup_lon)
+    quadrants[quadrant] += 1
+
+# Print the results
+for quadrant, count in quadrants.items():
+    print(f"{quadrant}: {count} rides")
+
+# Convert dictionary to Spark DataFrame
+quadrants_df = spark.createDataFrame(
+    [(k, v) for k, v in quadrants.items()], ["Quadrant", "Rides"]
+)
 
 # Write DataFrame to CSV file
-countsDF.coalesce(1).write.csv(
+quadrants_df.coalesce(1).write.csv(
     "wasbs://"
     + storage_container_name
     + "@"
@@ -73,7 +81,7 @@ dbutils.fs.cp(
     + storage_container_name
     + "@"
     + storage_account_name
-    + ".blob.core.windows.net/output2.csv",
+    + ".blob.core.windows.net/output4.csv",
 )
 dbutils.fs.rm(
     "wasbs://"
@@ -84,4 +92,4 @@ dbutils.fs.rm(
     recurse=True,
 )
 
-print("Quadrant counts saved to output2.csv")
+print("Quadrant counts saved to output4.csv")
