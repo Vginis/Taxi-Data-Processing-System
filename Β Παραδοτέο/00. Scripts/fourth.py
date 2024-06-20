@@ -1,7 +1,7 @@
 # Set the data location and type
 storage_container_name = "storagecontainer"
 storage_account_name = "taxibatchdata"
-storage_account_access_key = "ejXy7zl57vPiu4WiNWZj8PMw996zSvPqVmlgMIDlppN2rJSpx03lSGMnLWPkS86CzJLOFgQA+eAe+AStxRlvnw=="
+storage_account_access_key = "access_key"
 
 dbutils.widgets.text("fileName","","")
 fileName = "/mnt/taxidata/Streaming/" +dbutils.widgets.get("fileName")

@@ -18,5 +18,8 @@ Our team developed a comprehensive data processing system that handles data coll
 * Azure Data Factory: For orchestrating data workflows and moving data between different storage and processing units.
 * Azure Databricks: For batch data analysis and processing, leveraging Apache Spark's capabilities.
 * Azure Blob Storage: For scalable and secure storage of raw and processed data.
-* Azure Event Hub: For capturing and streaming large volumes of taxi data in real-time, ensuring rapid data ingestion and availability. The python script send.py is used for pushing small data into the Event Hub.  
+* Azure Event Hub: For capturing and streaming large volumes of taxi data in real-time, ensuring rapid data ingestion and availability. The python script streaming-sender.py is used for pushing small data into the Event Hub.  
 * Azure Functions: For processing data events on-the-fly with serverless compute, enabling real-time processing and transformation of incoming data streams.
+
+## System Architecture
+![alt text](image.png)

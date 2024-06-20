@@ -4,7 +4,7 @@ import json
 from azure.eventhub import EventData
 from azure.eventhub.aio import EventHubProducerClient
 
-EVENT_HUB_CONNECTION_STR = "Endpoint=sb://test-eh123.servicebus.windows.net/;SharedAccessKeyName=testPolicy;SharedAccessKey=J9BKlBKgxz8z6Bcc6iKWPwdYVT1Z5Qkly+AEhLM3AZ0=;EntityPath=eh-test"
+EVENT_HUB_CONNECTION_STR = "Endpoint=sb://test-eh123.servicebus.windows.net/;SharedAccessKeyName=testPolicy;SharedAccessKey=access_key;EntityPath=eh-test"
 EVENT_HUB_NAME = "eh-test"
 
 async def run():
